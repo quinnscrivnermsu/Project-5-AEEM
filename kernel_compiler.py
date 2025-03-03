@@ -17,13 +17,16 @@ class KernelCompiler:
     def start(self):
         for kernel in self.kernels.keys():
             print(f"Compiling {kernel}...")
+            os.chdir(kernel)
+
+            # Clean the build directory and create the default config
+            Popen(['make', 'mrproper'], stdout=DEVNULL).wait()
+            Popen(['make', 'defconfig'], stdout=DEVNULL).wait()
 
             # @TODO: Write a reliable function to obtain what needs to be compiled and track it with a progress bar.
 
-            os.chdir(kernel)
-
             # Start the compile and track output.
-            with Popen(['make', '-j4'], stdout=PIPE, universal_newlines=True) as compile:
+            with Popen(['make', 'all', '-j4'], stdout=PIPE, universal_newlines=True) as compile:
                 for line in compile.stdout:
                         # Cut out the file path and extension from the file name.
                         fileParts = line.split()
@@ -45,5 +48,3 @@ class KernelCompiler:
 
 
             # @TODO: Initialize ram fs to allow for booting into the new kernel.
-
-
