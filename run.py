@@ -5,13 +5,17 @@ from kernel_compiler import KernelCompiler
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-k', '--kernel', action='append', nargs='+')
+parser.add_argument('-t', '--threads')
 args = parser.parse_args()
 
 if args.kernel is None:
     print("No kernels specified")
     exit()
 
-print("Welcome to the Automated Experiment Execution Manager:\n\n")
+if args.threads is None:
+    args.threads = 4
+
+print("Welcome to the Automated Experiment Execution Manager:\n")
 
 compiler = KernelCompiler(args)
-compiler.start()
+compiler.start(args.threads)

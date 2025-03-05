@@ -1,9 +1,13 @@
-import os, stat
+import os, stat, fileinput, re, distro
 from collections import defaultdict
 from subprocess import Popen, PIPE, DEVNULL
+from pathlib import Path
 
 PROGRAM_DIR = os.getcwd()
 SCRIPTS_PATH = PROGRAM_DIR + '/scripts'
+DISTRO_NAME = distro.id()
+DISTRO_VERSION = distro.version()
+CONFIG_FILE = Path(f"/lib/modules/{os.uname().release}/build/.config")
 
 class KernelCompiler:
     kernels = defaultdict(list)
@@ -14,37 +18,52 @@ class KernelCompiler:
                 if os.path.exists(kernel):
                     self.kernels[kernel] = []
 
-    def start(self):
+    def setup_environment(self, kernel):
+        print(f"Setting up environment for Kernel compilation...")
+
+        # Clean the build directory and create the default config
+        Popen(['make', 'mrproper'], stdout=DEVNULL).wait()
+
+        # @TODO: Figure out what were going to do if we don't have a config file here.
+        # Use the currently running Kernel config as a base
+        Popen("cp /boot/config-$(uname -r) .config", stdout=DEVNULL, shell=True).wait()
+
+        # Update the config to match the Kernel we intend to build with
+        Popen(['make', 'olddefconfig'], stdout=DEVNULL, stderr=DEVNULL).wait()
+
+        # This is required as it will fail to compile with Make and exit with Error Code 2 due to the CONFIG_SYSTEM_TRUSTED_KEY
+        if DISTRO_NAME == "centos" and DISTRO_VERSION == "9":
+            for line in fileinput.input(".config", inplace=True):
+                trusted_key_line = re.sub(r'CONFIG_SYSTEM_TRUSTED_KEYS=.*', 'CONFIG_SYSTEM_TRUSTED_KEYS=""', line)
+                print(trusted_key_line, end='')
+
+
+    def start(self, threads):
+        print(f"{len(self.kernels.keys())} experiments to compile:\n")
+
         for kernel in self.kernels.keys():
-            print(f"Compiling {kernel}...")
+            KERNEL_NAME = kernel.split('/')[-1]
+
+            print(f"Experiment {KERNEL_NAME}:")
             os.chdir(kernel)
 
-            # Clean the build directory and create the default config
-            Popen(['make', 'mrproper'], stdout=DEVNULL).wait()
-            Popen(['make', 'defconfig'], stdout=DEVNULL).wait()
-
-            # @TODO: Write a reliable function to obtain what needs to be compiled and track it with a progress bar.
+            self.setup_environment(kernel)
 
             # Start the compile and track output.
-            with Popen(['make', 'all', '-j4'], stdout=PIPE, universal_newlines=True) as compile:
-                for line in compile.stdout:
-                        # Cut out the file path and extension from the file name.
-                        fileParts = line.split()
-                        for part in fileParts:
-                            if part.endswith(".o"):
-                                file_name = os.path.basename(part)[:-2]
+            print("Starting compile...")
 
-                                # Currently used for debugging what is being outputted from the Make process.
-                                print(line)
-            compile.wait()
+            # @TODO: In the future, we can use compile for error handing and logging.
+            Popen(['make', f'-j{threads}'], stdout=DEVNULL, universal_newlines=True).wait()
+
+            print("Compile successful!")
 
             # Install Kernel Modules
             print("Installing built kernel modules...")
             Popen(['make', 'modules_install'], stdout=DEVNULL).wait()
 
             # Install the Kernel
-            print("Installing Kernel into /boot...")
+            print(f"Installing {KERNEL_NAME} into /boot...")
             Popen(['make', 'install'], stdout=DEVNULL).wait()
-
+            print("\n")
 
             # @TODO: Initialize ram fs to allow for booting into the new kernel.
