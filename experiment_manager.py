@@ -1,9 +1,19 @@
 import os, stat, fileinput, re
 from collections import defaultdict
 from subprocess import PIPE, DEVNULL
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 
 PROGRAM_DIR = os.getcwd()
 SCRIPTS_PATH = PROGRAM_DIR + '/scripts'
+
+# Authenticate and Create PyDrive Client
+gauth = GoogleAuth()
+gauth.LocalWebserverAuth()
+drive = GoogleDrive(gauth)
+
+#Specify the Folder ID that gets the uploaded files. 
+folder_id = '1ejmiLZweyhIZtv_Fi_3KzsMmMYNjPjEa'
 
 class ExperimentManager:
     exps = defaultdict(list)
@@ -34,4 +44,8 @@ class ExperimentManager:
             print("Experiment successful!")
             
 
-            # @TODO: Store it in the cloud server, after visualization
+            # @TODO Quinn: Store it in the cloud server, after visualization
+            #upload the files to Google Drive 
+            fileUpload = drive.CreateFile({'parents': [{'id': folder_id}]})
+            fileUpload.SetContentFile("RESULTDATA.CSV")
+            fileUpload.Upload()
