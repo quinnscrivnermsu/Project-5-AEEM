@@ -26,27 +26,32 @@ class ExperimentManager:
                 if os.path.exists(experiment):
                     self.exps.append(experiment)
 
-        if args.experiment is not None:
-            self.current_exp = int(args.experiment)
-            
-            if self.current_exp >= len(self.exps):
-                print("Invalid experiment number provided")
-                exit()
-        else: 
-            print(f"{len(self.exps)} experiments to run:\n")
-            self.current_exp = 0
-
-    def setup_environment(self, experiment):
+    def setup_environment(self):
         print(f"Setting up environment...")
+        next_exp = self.current_exp + 1
 
-    def run_benchmark(self, test):
+        # Get the last cron entry and remove it.
+        CRON.remove_all(comment=f'AEEM-Experiment{self.current_exp}')
+
+        # Add a new cron job entry to run the next benchmark
+        job = CRON.new(command=f"python {PROGRAM_DIR}/run.py --experiment { next_exp }", comment=f'AEEM-Experiment{next_exp}')
+        job.every_reboot()
+        CRON.write()
+
+        # Switch the Kernel and Reboot
+        # Popen(['kexec', '-l', self.exps[ next_exp ]]).wait()
+        # Popen(['kexec', '-e'])
+
+
+    def run_benchmark(self, test, run_next):
         print("Starting Experiment...\n")
-        
-        # An example test is: bfs -g 10 -n 1
-        Popen([GAPBS_PATH + test, '-g', '10', '-n', '1']).wait()
 
-        # Figure out a way to switch the kernel and then run the next experiment.
-        
+        # An example test is: bfs -g 10 -n 1
+        #Popen([GAPBS_PATH + test, '-g', '10', '-n', '1']).wait()
+
+        with open('hello.txt', 'w') as file:
+            file.write('Hello, World!')
+
         print("Experiment complete!")
         
 
@@ -56,11 +61,21 @@ class ExperimentManager:
         # fileUpload.SetContentFile("RESULTDATA.CSV")
         # fileUpload.Upload()
 
+        if run_next:
+            self.setup_environment()
+        else:
+            print("All experiments complete!")
+            exit()
 
-    def start(self):
-        experiment = self.exps[ self.current_exp ]
 
-        print(f"Running Experiment {experiment}:\n")
+    def start(self, exp):
+        if exp is None:
+            self.setup_environment()
+        else:
+            self.current_exp = exp
 
-        self.setup_environment(experiment)
-        self.run_benchmark('bfs')
+            # Check to see if we actually have another experiment to run
+            if self.exps[ self.current_exp + 1 ] is None:
+                self.run_benchmark('bfs', False)
+            else:
+                self.run_benchmark('bfs', True)
