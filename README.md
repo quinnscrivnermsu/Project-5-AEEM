@@ -2,4 +2,9 @@
 Automated Experiment Execution Manager created by Dre Woolston, Mark Thompson, Miah Weems, and Quinn Scrivner
 
 # How to Start Experiments
-lorem ipsum 
+lorem ipsum
+
+# Dependencies
+- pydrive
+- python-crontab
+

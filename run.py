@@ -5,7 +5,7 @@ from experiment_manager import ExperimentManager
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-k', '--kernel', action='append', nargs='+')
-parser.add_argument('-t', '--threads')
+parser.add_argument('-e', '--experiment')
 args = parser.parse_args()
 
 if args.kernel is None:
