@@ -50,11 +50,11 @@ class ExperimentManager:
         print("Experiment complete!")
         
 
-        # @TODO Quinn: Store it in the cloud server, after visualization
         # upload the files to Google Drive 
-        # fileUpload = drive.CreateFile({'parents': [{'id': folder_id}]})
-        # fileUpload.SetContentFile("RESULTDATA.CSV")
-        # fileUpload.Upload()
+        # TODO Miah, figure out how we will store results and change the line with "SetContentFile" to the experiment results.
+        fileUpload = drive.CreateFile({'parents': [{'id': folder_id}]})
+        fileUpload.SetContentFile('HousePrice.csv')
+        fileUpload.Upload()
 
 
     def start(self):
