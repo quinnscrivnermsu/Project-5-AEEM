@@ -34,7 +34,7 @@ class ExperimentManager:
 
         if queue_next:
             next_exp = self.current_exp + 1
-            
+
             # Add a new cron job entry to run the next experiment
             job_command = f"python {PROGRAM_DIR}/run.py --experiment { next_exp }"
             for kernel in self.exps:
@@ -57,10 +57,7 @@ class ExperimentManager:
         print("Starting Experiment...\n")
 
         # An example test is: bfs -g 10 -n 1
-        #Popen([GAPBS_PATH + test, '-g', '10', '-n', '1']).wait()
-
-        with open('hello.txt', 'w') as file:
-            file.write('Hello, World!')
+        Popen([GAPBS_PATH + test, '-g', '10', '-n', '1']).wait()
 
         print("Experiment complete!")
         
