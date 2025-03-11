@@ -26,22 +26,24 @@ class ExperimentManager:
                 if os.path.exists(experiment):
                     self.exps.append(experiment)
 
-    def setup_environment(self):
+    def setup_environment(self, queue_next):
         print(f"Setting up environment...")
-        next_exp = self.current_exp + 1
 
         # Get the last cron entry and remove it.
         CRON.remove_all(comment=f'AEEM-Experiment{self.current_exp}')
 
-        # Add a new cron job entry to run the next experiment
-        job_command = f"python {PROGRAM_DIR}/run.py --experiment { next_exp }"
-        for kernel in self.exps:
-            job_command += f' --kernel {kernel}'
+        if queue_next:
+            next_exp = self.current_exp + 1
+            
+            # Add a new cron job entry to run the next experiment
+            job_command = f"python {PROGRAM_DIR}/run.py --experiment { next_exp }"
+            for kernel in self.exps:
+                job_command += f' --kernel {kernel}'
 
-        
-        job = CRON.new(command=job_command, comment=f'AEEM-Experiment{next_exp}')
-        job.every_reboot()
-        CRON.write()
+            
+            job = CRON.new(command=job_command, comment=f'AEEM-Experiment{next_exp}')
+            job.every_reboot()
+            CRON.write()
 
         # Switch the Kernel and Reboot.
         kernel_version = self.exps[ self.current_exp ].split('/boot/vmlinuz-')[-1]
