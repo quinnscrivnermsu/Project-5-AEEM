@@ -33,14 +33,22 @@ class ExperimentManager:
         # Get the last cron entry and remove it.
         CRON.remove_all(comment=f'AEEM-Experiment{self.current_exp}')
 
-        # Add a new cron job entry to run the next benchmark
-        job = CRON.new(command=f"python {PROGRAM_DIR}/run.py --experiment { next_exp }", comment=f'AEEM-Experiment{next_exp}')
+        # Add a new cron job entry to run the next experiment
+        job_command = f"python {PROGRAM_DIR}/run.py --experiment { next_exp }"
+        for kernel in self.exps:
+            job_command += f' --kernel {kernel}'
+
+        
+        job = CRON.new(command=job_command, comment=f'AEEM-Experiment{next_exp}')
         job.every_reboot()
         CRON.write()
 
-        # Switch the Kernel and Reboot
-        # Popen(['kexec', '-l', self.exps[ next_exp ]]).wait()
-        # Popen(['kexec', '-e'])
+        # Switch the Kernel and Reboot.
+        kernel_version = self.exps[ self.current_exp ].split('/boot/vmlinuz-')[-1]
+
+        print("System will now reboot into the new kernel and begin the experiment..")
+        Popen(['kexec', '-l', self.exps[ next_exp ], f'--initrd=/boot/initramfs-{kernel_version}.img', '--reuse-cmdline']).wait()
+        Popen(['kexec', '-e'])
 
 
     def run_benchmark(self, test, run_next):
@@ -69,13 +77,14 @@ class ExperimentManager:
 
 
     def start(self, exp):
-        if exp is None:
+        self.current_exp = exp
+
+        # If the current experiment is -1 then we assume we are starting from the very first experiment
+        if self.current_exp == -1:
             self.setup_environment()
         else:
-            self.current_exp = exp
-
-            # Check to see if we actually have another experiment to run
-            if self.exps[ self.current_exp + 1 ] is None:
-                self.run_benchmark('bfs', False)
-            else:
+            next_exp = self.current_exp + 1
+            if next_exp >= 0 and next_exp < len(self.exps):
                 self.run_benchmark('bfs', True)
+            else:
+                self.run_benchmark('bfs', False)
