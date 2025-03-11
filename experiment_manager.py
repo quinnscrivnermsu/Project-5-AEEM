@@ -10,9 +10,9 @@ SCRIPTS_PATH = PROGRAM_DIR + '/scripts'
 CRON = CronTab(user=True)
 
 # Authenticate and Create PyDrive Client
-# gauth = GoogleAuth()
-# gauth.LocalWebserverAuth()
-# drive = GoogleDrive(gauth)
+gauth = GoogleAuth()
+gauth.LocalWebserverAuth()
+drive = GoogleDrive(gauth)
 
 #Specify the Folder ID that gets the uploaded files. 
 folder_id = '1ejmiLZweyhIZtv_Fi_3KzsMmMYNjPjEa'
@@ -62,11 +62,11 @@ class ExperimentManager:
         print("Experiment complete!")
         
 
-        # @TODO Quinn: Store it in the cloud server, after visualization
         # upload the files to Google Drive 
-        # fileUpload = drive.CreateFile({'parents': [{'id': folder_id}]})
-        # fileUpload.SetContentFile("RESULTDATA.CSV")
-        # fileUpload.Upload()
+        # TODO Miah, figure out how we will store results and change the line with "SetContentFile" to the experiment results.
+        fileUpload = drive.CreateFile({'parents': [{'id': folder_id}]})
+        fileUpload.SetContentFile('HousePrice.csv')
+        fileUpload.Upload()
 
         if run_next:
             self.setup_environment()
