@@ -90,6 +90,16 @@ class ExperimentManager:
         # Generate visualizations using the separate visualization module
         generate_all_visualizations(all_results, output_folder)
 
+        # Upload the visualization images to Google Drive
+        visualizations = ["all_experiments.png", "heatmap_all.png"]
+        for vis in visualizations:
+            vis_path = os.path.join(output_folder, vis)
+            fileUpload = drive.CreateFile({'parents': [{'id': folder_id}]})
+            fileUpload.SetContentFile(vis_path)
+            fileUpload["title"] = vis
+            fileUpload.Upload()
+            print(f"Uploaded visualization {vis} to Google Drive.")
+
 if __name__ == "__main__":
     class Args:
         kernel = [["bfs", "pr", "cc"]]  # Example kernels to be tested
