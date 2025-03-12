@@ -1,18 +1,17 @@
-import os, stat, fileinput, re
+import os, stat, fileinput, re, time
 from subprocess import PIPE, DEVNULL, Popen
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 from crontab import CronTab
 
-PROGRAM_DIR = os.getcwd()
-GAPBS_PATH = PROGRAM_DIR + '/gapbs/'
-SCRIPTS_PATH = PROGRAM_DIR + '/scripts'
+DIR_PATH, FILE_PATH = os.path.split(os.path.abspath(__file__))
+GAPBS_PATH = DIR_PATH + '/gapbs/'
 CRON = CronTab(user=True)
 
 # Authenticate and Create PyDrive Client
-gauth = GoogleAuth()
-gauth.LocalWebserverAuth()
-drive = GoogleDrive(gauth)
+#gauth = GoogleAuth()
+#gauth.LocalWebserverAuth()
+#drive = GoogleDrive(gauth)
 
 #Specify the Folder ID that gets the uploaded files. 
 folder_id = '1ejmiLZweyhIZtv_Fi_3KzsMmMYNjPjEa'
@@ -26,37 +25,36 @@ class ExperimentManager:
                 if os.path.exists(experiment):
                     self.exps.append(experiment)
 
-    def setup_environment(self, queue_next):
+    def setup_environment(self):
         print(f"Setting up environment...")
 
-        # Get the last cron entry and remove it.
-        CRON.remove_all(comment=f'AEEM-Experiment{self.current_exp}')
-
-        if queue_next:
+        try:
             next_exp = self.current_exp + 1
-
+            
             # Add a new cron job entry to run the next experiment
-            job_command = f"python {PROGRAM_DIR}/run.py --experiment { next_exp }"
+            job_command = f"python {DIR_PATH}/run.py --experiment { next_exp }"
             for kernel in self.exps:
                 job_command += f' --kernel {kernel}'
-
             
             job = CRON.new(command=job_command, comment=f'AEEM-Experiment{next_exp}')
             job.every_reboot()
             CRON.write()
 
-        # Switch the Kernel and Reboot.
-        kernel_version = self.exps[ self.current_exp ].split('/boot/vmlinuz-')[-1]
+            # Switch the kernel and reboot.
+            print("System will reboot in 10 seconds and start the experiment!")
+            Popen(['grubby', '--set-default', self.exps[ next_exp ]], stdout=DEVNULL, stderr=DEVNULL).wait()
+            time.sleep(10)
+            Popen(['shutdown', '-r', 'now'])
 
-        print("System will now reboot into the new kernel and begin the experiment..")
-        Popen(['kexec', '-l', self.exps[ next_exp ], f'--initrd=/boot/initramfs-{kernel_version}.img', '--reuse-cmdline']).wait()
-        Popen(['kexec', '-e'])
+        except IndexError:
+            print("Experiment does not exist.")
+            exit()
 
 
     def run_benchmark(self, test, run_next):
         print("Starting Experiment...\n")
 
-        # An example test is: bfs -g 10 -n 1
+        # An example test is: bfs -g 10 -n 1 (This implies the user has installed all of the benchmarks to /usr/bin/)
         Popen([GAPBS_PATH + test, '-g', '10', '-n', '1']).wait()
 
         print("Experiment complete!")
@@ -64,9 +62,9 @@ class ExperimentManager:
 
         # upload the files to Google Drive 
         # TODO Miah, figure out how we will store results and change the line with "SetContentFile" to the experiment results.
-        fileUpload = drive.CreateFile({'parents': [{'id': folder_id}]})
-        fileUpload.SetContentFile('HousePrice.csv')
-        fileUpload.Upload()
+        # fileUpload = drive.CreateFile({'parents': [{'id': folder_id}]})
+        # fileUpload.SetContentFile('HousePrice.csv')
+        # fileUpload.Upload()
 
         if run_next:
             self.setup_environment()
@@ -82,6 +80,9 @@ class ExperimentManager:
         if self.current_exp == -1:
             self.setup_environment()
         else:
+            # Get the last cron entry and remove it.
+            CRON.remove_all(comment=f'AEEM-Experiment{self.current_exp}')
+
             next_exp = self.current_exp + 1
             if next_exp >= 0 and next_exp < len(self.exps):
                 self.run_benchmark('bfs', True)
