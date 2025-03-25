@@ -17,32 +17,33 @@ CRON = CronTab(user=True)
 folder_id = '1ejmiLZweyhIZtv_Fi_3KzsMmMYNjPjEa'
 
 class ExperimentManager:
+    kernels = []
     exps = []
 
     def __init__(self, args):
         for element in args.kernel:
-            for experiment in element:
-                if os.path.exists(experiment):
-                    self.exps.append(experiment)
+            for kernel in element:
+                if os.path.exists(kernel):
+                    self.kernels.append(kernel)
 
     def setup_environment(self):
         print(f"Setting up environment...")
 
         try:
-            next_exp = self.current_exp + 1
+            next_kernel = self.current_kernel + 1
             
             # Add a new cron job entry to run the next experiment
-            job_command = f"python {DIR_PATH}/run.py --experiment { next_exp }"
-            for kernel in self.exps:
+            job_command = f"python {DIR_PATH}/run.py --experiment { next_kernel }"
+            for kernel in self.kernels:
                 job_command += f' --kernel {kernel}'
             
-            job = CRON.new(command=job_command, comment=f'AEEM-Experiment{next_exp}')
+            job = CRON.new(command=job_command, comment=f'AEEM-Kernel{next_kernel}')
             job.every_reboot()
             CRON.write()
 
             # Switch the kernel and reboot.
             print("System will reboot in 10 seconds and start the experiment!")
-            Popen(['grubby', '--set-default', self.exps[ next_exp ]], stdout=DEVNULL, stderr=DEVNULL).wait()
+            Popen(['grubby', '--set-default', self.kernels[ next_kernel ]], stdout=DEVNULL, stderr=DEVNULL).wait()
             time.sleep(10)
             Popen(['shutdown', '-r', 'now'])
 
@@ -73,18 +74,18 @@ class ExperimentManager:
             exit()
 
 
-    def start(self, exp):
-        self.current_exp = exp
+    def start(self, kernel):
+        self.current_kernel = kernel
 
-        # If the current experiment is -1 then we assume we are starting from the very first experiment
-        if self.current_exp == -1:
+        # If the current kernel is -1 then we assume we are starting from the very first kernel
+        if self.current_kernel == -1:
             self.setup_environment()
         else:
             # Get the last cron entry and remove it.
-            CRON.remove_all(comment=f'AEEM-Experiment{self.current_exp}')
+            CRON.remove_all(comment=f'AEEM-Kernel{self.current_kernel}')
 
-            next_exp = self.current_exp + 1
-            if next_exp >= 0 and next_exp < len(self.exps):
+            next_kernel = self.current_kernel + 1
+            if next_kernel >= 0 and next_kernel < len(self.kernels):
                 self.run_benchmark('bfs', True)
             else:
                 self.run_benchmark('bfs', False)
