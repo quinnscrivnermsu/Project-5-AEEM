@@ -20,11 +20,13 @@ class ExperimentManager:
     kernels = []
     exps = []
 
-    def __init__(self, args):
-        for element in args.kernel:
-            for kernel in element:
+    def __init__(self, exp_data):
+        for data in exp_data:
+            for kernel in data.kernels:
                 if os.path.exists(kernel):
                     self.kernels.append(kernel)
+
+            exps = exp_data.experiments
 
     def setup_environment(self):
         print(f"Setting up environment...")
@@ -55,10 +57,10 @@ class ExperimentManager:
     def run_benchmark(self, test, run_next):
         print("Starting Experiment...\n")
 
+        # @TODO: Loop through all of the GAPBS benchmarks specified and wait for each one to finish.
+
         # An example test is: bfs -g 10 -n 1 (This implies the user has installed all of the benchmarks to /usr/bin/)
         Popen([GAPBS_PATH + test, '-g', '10', '-n', '1']).wait()
-
-        print("Experiment complete!")
         
 
         # upload the files to Google Drive 
@@ -66,6 +68,8 @@ class ExperimentManager:
         # fileUpload = drive.CreateFile({'parents': [{'id': folder_id}]})
         # fileUpload.SetContentFile('HousePrice.csv')
         # fileUpload.Upload()
+
+        print("Experiment complete!")
 
         if run_next:
             self.setup_environment()

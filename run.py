@@ -14,7 +14,20 @@ if args.kernel is None and args.experiment is None:
 
 print("Welcome to the Automated Experiment Execution Manager:\n")
 
-experiments = ExperimentManager(args)
+exp_data = []
+
+# For each kernel, determine how many experiments they want to run and which benchmarks
+for kernel in args.kernel:
+    new_exp = {}
+    new_exp.kernel = kernel
+    new_exp.experiments = []
+
+    exp_num = input("How many experiments would you like to run on this Kernel?:")
+    for i in range(0, exp_num):
+        benchmark_name = input("Which benchmark do you want to run?:")
+        new_exp.experiments.append(benchmark_name)
+
+experiments = ExperimentManager(exp_data)
 
 if args.experiment is not None:
     current_kernel = int(args.experiment)
