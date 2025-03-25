@@ -48,7 +48,7 @@ class ExperimentManager:
             Popen(['shutdown', '-r', 'now'])
 
         except IndexError:
-            print("Experiment does not exist.")
+            print("Kernel does not exist!")
             exit()
 
 
