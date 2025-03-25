@@ -22,11 +22,11 @@ class ExperimentManager:
 
     def __init__(self, exp_data):
         for data in exp_data:
-            for kernel in data.kernels:
-                if os.path.exists(kernel):
-                    self.kernels.append(kernel)
+            exp_kernel = data['kernel']
+            if os.path.exists(exp_kernel):
+                self.kernels.append(exp_kernel)
 
-            exps = exp_data.experiments
+            self.exps.append(data['experiments'])
 
     def setup_environment(self):
         print(f"Setting up environment...")

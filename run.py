@@ -19,13 +19,15 @@ exp_data = []
 # For each kernel, determine how many experiments they want to run and which benchmarks
 for kernel in args.kernel:
     new_exp = {}
-    new_exp.kernel = kernel
-    new_exp.experiments = []
+    new_exp['kernel'] = kernel[0]
+    new_exp['experiments'] = []
 
-    exp_num = input("How many experiments would you like to run on this Kernel?:")
-    for i in range(0, exp_num):
-        benchmark_name = input("Which benchmark do you want to run?:")
-        new_exp.experiments.append(benchmark_name)
+    exp_num = input("How many experiments would you like to run on this Kernel?: ")
+    for i in range(0, int(exp_num)):
+        benchmark_name = input("Which benchmark do you want to run?: ")
+        new_exp['experiments'].append(benchmark_name)
+    
+    exp_data.append(new_exp)
 
 experiments = ExperimentManager(exp_data)
 
