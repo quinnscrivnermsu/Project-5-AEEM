@@ -9,9 +9,9 @@ GAPBS_PATH = DIR_PATH + '/gapbs/'
 CRON = CronTab(user=True)
 
 # Authenticate and Create PyDrive Client
-#gauth = GoogleAuth()
-#gauth.LocalWebserverAuth()
-#drive = GoogleDrive(gauth)
+# gauth = GoogleAuth()
+# gauth.LocalWebserverAuth()
+# drive = GoogleDrive(gauth)
 
 #Specify the Folder ID that gets the uploaded files. 
 folder_id = '1ejmiLZweyhIZtv_Fi_3KzsMmMYNjPjEa'
