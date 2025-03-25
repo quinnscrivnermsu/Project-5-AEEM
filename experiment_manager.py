@@ -8,6 +8,7 @@ DIR_PATH, FILE_PATH = os.path.split(os.path.abspath(__file__))
 GAPBS_PATH = DIR_PATH + '/gapbs/'
 CRON = CronTab(user=True)
 
+
 # Authenticate and Create PyDrive Client
 # gauth = GoogleAuth()
 # gauth.LocalWebserverAuth()
@@ -22,11 +23,11 @@ class ExperimentManager:
 
     def __init__(self, exp_data):
         for data in exp_data:
-            exp_kernel = data['kernel']
-            if os.path.exists(exp_kernel):
-                self.kernels.append(exp_kernel)
+            for kernel in data.kernels:
+                if os.path.exists(kernel):
+                    self.kernels.append(kernel)
 
-            self.exps.append(data['experiments'])
+            exps = exp_data.experiments
 
     def setup_environment(self):
         print(f"Setting up environment...")
