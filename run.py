@@ -14,6 +14,8 @@ if args.kernel is None and args.experiment is None:
 
 print("Welcome to the Automated Experiment Execution Manager:\n")
 
+# @TODO: Determine how many kernels will be used and what kernels to use
+
 exp_data = []
 
 # For each kernel, determine how many experiments they want to run and which benchmarks

@@ -17,16 +17,17 @@ CRON = CronTab(user=True)
 folder_id = '1ejmiLZweyhIZtv_Fi_3KzsMmMYNjPjEa'
 
 class ExperimentManager:
-    kernels = []
-    exps = []
-
     def __init__(self, exp_data):
+        self.kernels = {}
+        
         for data in exp_data:
             exp_kernel = data['kernel']
             if os.path.exists(exp_kernel):
-                self.kernels.append(exp_kernel)
+                if exp_kernel not in self.kernels:
+                    self.kernels[exp_kernel] = []
+        
+                self.kernels[exp_kernel] = data['experiments']
 
-            self.exps.append(data['experiments'])
 
     def setup_environment(self):
         print(f"Setting up environment...")
@@ -39,6 +40,7 @@ class ExperimentManager:
             for kernel in self.kernels:
                 job_command += f' --kernel {kernel}'
             
+            # Write to the systems crontab
             job = CRON.new(command=job_command, comment=f'AEEM-Kernel{next_kernel}')
             job.every_reboot()
             CRON.write()
@@ -54,7 +56,7 @@ class ExperimentManager:
             exit()
 
 
-    def run_benchmark(self, test, run_next):
+    def run_benchmark(self, run_next):
         print("Starting Experiment...\n")
 
         # @TODO: Loop through all of the GAPBS benchmarks specified and wait for each one to finish.
@@ -90,6 +92,6 @@ class ExperimentManager:
 
             next_kernel = self.current_kernel + 1
             if next_kernel >= 0 and next_kernel < len(self.kernels):
-                self.run_benchmark('bfs', True)
+                self.run_benchmarks('bfs', True)
             else:
                 self.run_benchmark('bfs', False)
