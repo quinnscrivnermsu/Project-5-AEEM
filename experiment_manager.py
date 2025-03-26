@@ -17,81 +17,89 @@ CRON = CronTab(user=True)
 folder_id = '1ejmiLZweyhIZtv_Fi_3KzsMmMYNjPjEa'
 
 class ExperimentManager:
-    def __init__(self, exp_data):
+    def load_experiment_data(self, exp_data):
         self.kernels = {}
         
         for data in exp_data:
             exp_kernel = data['kernel']
-            if os.path.exists(exp_kernel):
-                if exp_kernel not in self.kernels:
-                    self.kernels[exp_kernel] = []
-        
+            if exp_kernel not in self.kernels:
                 self.kernels[exp_kernel] = data['experiments']
+    
+    def write_benchmarks_to_file(self):
+        for kernel in self.kernels:
+            benchmarks = self.kernels[kernel]
 
+            with open(os.path.join(DIR_PATH, kernel + '.txt'), "w") as file:
+                    for benchmark in benchmarks:
+                        file.write(f"{benchmark}")
 
-    def setup_environment(self):
+    def get_next_kernel(self, current_kernel):
+        try:
+            benchmark_files = sorted([file for file in os.listdir('.') if file.endswith('.txt') ])
+            
+            current_file = benchmark_files.index(current_kernel + '.txt')
+            if current_file >= len(benchmark_files) - 1:
+                return None
+            
+            return benchmark_files[current_file + 1].replace('.txt', '')
+        except ValueError:
+            return None # Doesn't exist or not found in the file list
+
+    def setup_environment(self, kernel):
         print(f"Setting up environment...")
 
-        try:
-            next_kernel = self.current_kernel + 1
-            
-            # Add a new cron job entry to run the next experiment
-            job_command = f"python {DIR_PATH}/run.py --experiment { next_kernel }"
-            for kernel in self.kernels:
-                job_command += f' --kernel {kernel}'
-            
-            # Write to the systems crontab
-            job = CRON.new(command=job_command, comment=f'AEEM-Kernel{next_kernel}')
-            job.every_reboot()
-            CRON.write()
+        # Write to the systems crontab
+        job_command = f"python {DIR_PATH}/run.py --kerneltorun { kernel }"
+        job = CRON.new(command=job_command, comment=f'AEEM-Kernel({kernel})')
+        job.every_reboot()
+        CRON.write()
 
-            # Switch the kernel and reboot.
-            print("System will reboot in 10 seconds and start the experiment!")
-            Popen(['grubby', '--set-default', self.kernels[ next_kernel ]], stdout=DEVNULL, stderr=DEVNULL).wait()
-            time.sleep(10)
-            Popen(['shutdown', '-r', 'now'])
-
-        except IndexError:
-            print("Kernel does not exist!")
-            exit()
+        # Switch the kernel and reboot.
+        print("System will reboot in 10 seconds and start the experiment!")
+        Popen(['grubby', '--set-default', '/boot/' + kernel], stdout=DEVNULL, stderr=DEVNULL).wait()
+        time.sleep(10)
+        Popen(['shutdown', '-r', 'now'])
 
 
-    def run_benchmark(self, run_next):
-        print("Starting Experiment...\n")
+    def run_benchmarks(self, current_kernel):
+        print(f"Starting Experiment for Kernel {current_kernel}...\n")
 
-        # @TODO: Loop through all of the GAPBS benchmarks specified and wait for each one to finish.
+        # Get current kernel cron entry and remove it
+        CRON.remove_all(comment=f'AEEM-Kernel({current_kernel})')
+        CRON.write()
 
-        # An example test is: bfs -g 10 -n 1 (This implies the user has installed all of the benchmarks to /usr/bin/)
-        Popen([GAPBS_PATH + test, '-g', '10', '-n', '1']).wait()
+        # Retrieve the next kernel to be ran
+        next_kernel = self.get_next_kernel(current_kernel)
         
+        benchmark_file = current_kernel + '.txt'
+        if not os.path.exists(os.path.join(DIR_PATH, benchmark_file)):
+            print("No benchmarks found.")
 
-        # upload the files to Google Drive 
-        # TODO Miah, figure out how we will store results and change the line with "SetContentFile" to the experiment results.
-        # fileUpload = drive.CreateFile({'parents': [{'id': folder_id}]})
-        # fileUpload.SetContentFile('HousePrice.csv')
-        # fileUpload.Upload()
+            if next_kernel is None:
+                exit() # Exit the program as we don't have any more benchmarks to run.
+            else:
+                self.setup_environment(next_kernel) # Switch to the next kernel
+                return
+
+        # Open our text file and run all of our benchmarks
+        with open(os.path.join(DIR_PATH, benchmark_file)) as file:
+            for benchmark in file:
+                Popen([GAPBS_PATH + benchmark, '-g', '10', '-n', '1']).wait()
+
+                # Upload the complete experiment file to the Google Drive
+                # TODO Miah, figure out how we will store results and change the line with "SetContentFile" to the experiment results.
+                # fileUpload = drive.CreateFile({'parents': [{'id': folder_id}]})
+                # fileUpload.SetContentFile('HousePrice.csv')
+                # fileUpload.Upload()
 
         print("Experiment complete!")
 
-        if run_next:
-            self.setup_environment()
+        if next_kernel is not None:
+            self.setup_environment(next_kernel)
         else:
             print("All experiments complete!")
             exit()
-
-
-    def start(self, kernel):
-        self.current_kernel = kernel
-
-        # If the current kernel is -1 then we assume we are starting from the very first kernel
-        if self.current_kernel == -1:
-            self.setup_environment()
-        else:
-            # Get the last cron entry and remove it.
-            CRON.remove_all(comment=f'AEEM-Kernel{self.current_kernel}')
-
-            next_kernel = self.current_kernel + 1
-            if next_kernel >= 0 and next_kernel < len(self.kernels):
-                self.run_benchmarks('bfs', True)
-            else:
-                self.run_benchmark('bfs', False)
+            
+    def start(self):
+        first_kernel = next(iter(self.kernels))
+        self.setup_environment(first_kernel)

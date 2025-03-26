@@ -1,46 +1,57 @@
 # CSC 450 Project 5: POC Kernel Compilation
-
-import argparse
+import os, argparse
 from experiment_manager import ExperimentManager
 
 parser = argparse.ArgumentParser()
-parser.add_argument('-k', '--kernel', action='append', nargs='+')
-parser.add_argument('-e', '--experiment')
+parser.add_argument('-k', '--kerneltorun', action='append', nargs='+')
 args = parser.parse_args()
-
-if args.kernel is None and args.experiment is None:
-    print("No kernels specified")
-    exit()
 
 print("Welcome to the Automated Experiment Execution Manager:\n")
 
-# @TODO: Determine how many kernels will be used and what kernels to use
+manager = ExperimentManager()
 
-exp_data = []
+if args.kerneltorun is None:
+    # Continously ask for how many kernels will be used until kernel_num is valid.
+    while True:
+        try:
+            kernel_num =  int(input("Input How Many Kernels Will Be Used: "))
+        except ValueError:
+            print("Invalid input. Please try again.")
+            continue
+        else:
+            break
 
-# For each kernel, determine how many experiments they want to run and which benchmarks
-for kernel in args.kernel:
-    new_exp = {}
-    new_exp['kernel'] = kernel[0]
-    new_exp['experiments'] = []
+    # Loop through the amount of kernels and ask for the path and check if it exists
+    kernel_info = []
+    for number in range(0,kernel_num):
+        while True:
+            kernel_loc = input(f"Input Kernel {number + 1} Path: ")
+            if os.path.exists(kernel_loc):
+                kernel_loc = kernel_loc.replace('/boot/', '') # Replace /boot/ in kernel name
+                kernel_info.append(kernel_loc)
+                break
+            else:
+                print("Path does not exist. Please try again.")
+                continue
 
-    exp_num = input("How many experiments would you like to run on this Kernel?: ")
-    for i in range(0, int(exp_num)):
-        benchmark_name = input("Which benchmark do you want to run?: ")
-        new_exp['experiments'].append(benchmark_name)
-    
-    exp_data.append(new_exp)
+    exp_data = []
 
-experiments = ExperimentManager(exp_data)
+    # For each kernel, determine how many experiments they want to run and which benchmarks
+    for kernel in kernel_info:
+        new_exp = {}
+        new_exp["kernel"] = kernel
+        new_exp["experiments"] = []
 
-if args.experiment is not None:
-    current_kernel = int(args.experiment)
+        exp_num = int(input(f"How many experiments would you like to run for Kernel ({kernel})?: "))
+        for i in range(0, exp_num):
+            benchmark_name = input(f"Please enter the benchmark you would like to run at position {i + 1}: ")
+            new_exp['experiments'].append(benchmark_name)
 
-    if current_kernel > len(experiments.kernels):
-        print("Invalid experiment number provided")
-        exit()
-else: 
-    print(f"{len(experiments.kernels)} experiments to run:\n")
-    current_kernel = -1
+        exp_data.append(new_exp)
 
-experiments.start(current_kernel)
+    manager.load_experiment_data(exp_data)
+    manager.write_benchmarks_to_file()
+    manager.start()
+else:
+    # Open the kernel text file, and run each benchmark and store the results.
+    manager.run_benchmarks(args.kerneltorun[0][0])
