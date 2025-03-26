@@ -38,7 +38,7 @@ class ExperimentManager:
             benchmark_files = sorted([file for file in os.listdir(DIR_PATH) if file.endswith('.txt') ])
             
             current_file = benchmark_files.index(current_kernel + '.txt')
-            if current_file >= len(benchmark_files):
+            if current_file >= len(benchmark_files) - 1:
                 return None
             
             return benchmark_files[current_file + 1].replace('.txt', '')
