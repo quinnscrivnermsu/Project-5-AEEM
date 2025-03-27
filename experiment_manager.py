@@ -1,4 +1,4 @@
-import os, stat, fileinput, re, time
+import os, time
 from subprocess import PIPE, DEVNULL, Popen
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
@@ -27,21 +27,21 @@ class ExperimentManager:
     
     def write_benchmarks_to_file(self):
         for kernel in self.kernels:
-            benchmarks = self.kernels[kernel]
+            commands = self.kernels[kernel]
 
             with open(os.path.join(DIR_PATH, kernel + '.txt'), "w") as file:
-                    for benchmark in benchmarks:
-                        file.write(f"{benchmark}")
+                    for command in commands:
+                        file.write(f"{command}")
 
     def get_next_kernel(self, current_kernel):
         try:
-            benchmark_files = sorted([file for file in os.listdir('.') if file.endswith('.txt') ])
+            kernel_files = sorted([file for file in os.listdir('.') if file.endswith('.txt') ])
             
-            current_file = benchmark_files.index(current_kernel + '.txt')
-            if current_file >= len(benchmark_files) - 1:
+            current_file = kernel_files.index(current_kernel + '.txt')
+            if current_file >= len(kernel_files) - 1:
                 return None
             
-            return benchmark_files[current_file + 1].replace('.txt', '')
+            return kernel_files[current_file + 1].replace('.txt', '')
         except ValueError:
             return None # Doesn't exist or not found in the file list
 
@@ -83,8 +83,12 @@ class ExperimentManager:
 
         # Open our text file and run all of our benchmarks
         with open(os.path.join(DIR_PATH, benchmark_file)) as file:
-            for benchmark in file:
-                Popen([GAPBS_PATH + benchmark, '-g', '10', '-n', '1']).wait()
+            for command in file:
+                experiment = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+
+                # Retrieve output and errors from the command that was ran. (This will wait for the experiment to finish before returning the output and error)
+                output, error = experiment.communicate()
+
 
                 # Upload the complete experiment file to the Google Drive
                 # TODO Miah, figure out how we will store results and change the line with "SetContentFile" to the experiment results.
