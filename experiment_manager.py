@@ -31,8 +31,11 @@ class ExperimentManager:
 
             with open(os.path.join(DIR_PATH, kernel + '.txt'), "w") as file:
                     for benchmark in benchmarks:
-                        file.write(f"{benchmark}")
-
+                        file.write(f"{benchmark}")                     
+                        r_file = drive.CreateFile({'parents': [{'id': folder_id}]})
+                        r_file.SetContentFile('file.txt')
+                        r_file.Upload()
+                        
     def get_next_kernel(self, current_kernel):
         try:
             benchmark_files = sorted([file for file in os.listdir(DIR_PATH) if file.endswith('.txt') ])
