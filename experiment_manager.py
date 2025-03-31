@@ -9,9 +9,9 @@ GAPBS_PATH = DIR_PATH + '/gapbs/'
 CRON = CronTab(user=True)
 
 # Authenticate and Create PyDrive Client
-# gauth = GoogleAuth()
-# gauth.LocalWebserverAuth()
-# drive = GoogleDrive(gauth)
+gauth = GoogleAuth()
+gauth.LocalWebserverAuth()
+drive = GoogleDrive(gauth)
 
 #Specify the Folder ID that gets the uploaded files. 
 folder_id = '1ejmiLZweyhIZtv_Fi_3KzsMmMYNjPjEa'
@@ -32,9 +32,6 @@ class ExperimentManager:
             with open(os.path.join(DIR_PATH, kernel + '.txt'), "w") as file:
                     for benchmark in benchmarks:
                         file.write(f"{benchmark}")                     
-                        r_file = drive.CreateFile({'parents': [{'id': folder_id}]})
-                        r_file.SetContentFile('file.txt')
-                        r_file.Upload()
                         
     def get_next_kernel(self, current_kernel):
         try:
@@ -87,13 +84,28 @@ class ExperimentManager:
         # Open our text file and run all of our benchmarks
         with open(os.path.join(DIR_PATH, benchmark_file)) as file:
             for benchmark in file:
-                Popen([GAPBS_PATH + benchmark, '-g', '10', '-n', '1']).wait()
+                Popen([GAPBS_PATH + benchmark, '-g', '10', '-n', '1'], stdout=PIPE, stderr=PIPE).wait()
 
                 # Upload the complete experiment file to the Google Drive
-                # TODO Miah, figure out how we will store results and change the line with "SetContentFile" to the experiment results.
-                # fileUpload = drive.CreateFile({'parents': [{'id': folder_id}]})
-                # fileUpload.SetContentFile('HousePrice.csv')
-                # fileUpload.Upload()
+                # TODO Quinn Send output, both error and not error, to the SSS
+                experiement_results = stdout
+                error_results = stderr
+
+                results_file = "results.txt"
+                error_file = "errResults.txt"
+
+                with open(results_file, "w") as f:
+                    f.write(experiement_results)
+
+                r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': results_file})
+                r_file.Upload()
+
+                with open(error_file, "w") as f:
+                    f.write(experiement_results)
+
+                r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': error_file})
+                r_file.Upload()
+
 
         print("Experiment complete!")
 
