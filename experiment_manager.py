@@ -101,7 +101,7 @@ class ExperimentManager:
                 r_file.Upload()
 
                 with open(error_file, "w") as f:
-                    f.write(experiement_results)
+                    f.write(error_results)
 
                 r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': error_file})
                 r_file.Upload()
