@@ -44,8 +44,8 @@ if args.kerneltorun is None:
 
         exp_num = int(input(f"How many experiments would you like to run for Kernel ({kernel})?: "))
         for i in range(0, exp_num):
-            benchmark_name = input(f"Please enter the benchmark you would like to run at position {i + 1}: ")
-            new_exp['experiments'].append(benchmark_name)
+            command = input(f"Please enter the command you would like to run at position {i + 1}: ")
+            new_exp['experiments'].append(command)
 
         exp_data.append(new_exp)
 

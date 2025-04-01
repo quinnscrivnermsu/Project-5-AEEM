@@ -1,4 +1,4 @@
-import os, stat, fileinput, re, time
+import os, time
 from subprocess import PIPE, DEVNULL, Popen
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
@@ -27,12 +27,12 @@ class ExperimentManager:
     
     def write_benchmarks_to_file(self):
         for kernel in self.kernels:
-            benchmarks = self.kernels[kernel]
+            commands = self.kernels[kernel]
 
             with open(os.path.join(DIR_PATH, kernel + '.txt'), "w") as file:
-                    for benchmark in benchmarks:
-                        file.write(f"{benchmark}")                     
-                        
+                    for command in commands:
+                        file.write(f"{command}")
+
     def get_next_kernel(self, current_kernel):
         try:
             benchmark_files = sorted([file for file in os.listdir(DIR_PATH) if file.endswith('.txt') ])
@@ -83,13 +83,16 @@ class ExperimentManager:
 
         # Open our text file and run all of our benchmarks
         with open(os.path.join(DIR_PATH, benchmark_file)) as file:
-            for benchmark in file:
-                Popen([GAPBS_PATH + benchmark, '-g', '10', '-n', '1'], stdout=PIPE, stderr=PIPE).wait()
+            for command in file:
+                experiment = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
+
+                # Retrieve output and errors from the command that was ran. (This will wait for the experiment to finish before returning the output and error)
+                output, error = experiment.communicate()
 
                 # Upload the complete experiment file to the Google Drive
                 # TODO Quinn Send output, both error and not error, to the SSS
-                experiement_results = stdout
-                error_results = stderr
+                experiement_results = output
+                error_results = error
 
                 results_file = "results.txt"
                 error_file = "errResults.txt"
