@@ -97,17 +97,17 @@ class ExperimentManager:
                 results_file = "results.txt"
                 error_file = "errResults.txt"
 
-                with open(results_file, "w") as f:
+                with open(os.path.join(DIR_PATH, results_file), "w") as f:
                     f.write(experiement_results)
 
-                r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': results_file})
-                r_file.Upload()
+                # r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': results_file})
+                # r_file.Upload()
 
-                with open(error_file, "w") as f:
+                with open(os.path.join(DIR_PATH, error_file), "w") as f:
                     f.write(error_results)
 
-                r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': error_file})
-                r_file.Upload()
+                # r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': error_file})
+                # r_file.Upload()
 
 
         print("Experiment complete!")
