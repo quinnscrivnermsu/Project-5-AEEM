@@ -1,4 +1,5 @@
-# CSC 450 Project 5: POC Kernel Compilation
+# CSC 450 Project 5: Automated Experiment Execution Manager
+
 import os, argparse
 from experiment_manager import ExperimentManager
 

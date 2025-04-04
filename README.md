@@ -10,9 +10,15 @@ Next, the user will be prompted to enter the file paths for each kernel.
 
 Then, the user will be prompted for the number of experiments to run on each kernel.
 
-Lastly, the user will be prompted for the type of Benchmark being ran. 
+Lastly, the user will be prompted to enter the shell command to use for each experiment (Ex. `/home/gapbs/bfs -g 10 -n 1`)
 
-The program will then start a timer and then reboot and begin the experiments. 
+The program will then start a timer and then reboot and begin the experiments.
+
+
+# How to Run Experiments Without Switching Kernels
+1. Create a text file in the project directory
+2. Run the python program with the following arguments `python run.py --kerneltorun <textFileName>.txt
+3. Observe the results in the log files
 
 # Dependencies
 - pydrive
