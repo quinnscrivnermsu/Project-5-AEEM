@@ -31,7 +31,7 @@ class ExperimentManager:
 
             with open(os.path.join(DIR_PATH, kernel + '.txt'), "w") as file:
                     for command in commands:
-                        file.write(f"{command}")
+                        file.write(f"{command}\n")
 
     def get_next_kernel(self, current_kernel):
         try:
@@ -84,30 +84,28 @@ class ExperimentManager:
         # Open our text file and run all of our benchmarks
         with open(os.path.join(DIR_PATH, benchmark_file)) as file:
             for command in file:
+                clean_command = command.strip()
+
                 experiment = Popen(command, stdout=PIPE, stderr=PIPE, shell=True)
 
                 # Retrieve output and errors from the command that was ran. (This will wait for the experiment to finish before returning the output and error)
                 output, error = experiment.communicate()
 
-                # Upload the complete experiment file to the Google Drive
-                # TODO Quinn Send output, both error and not error, to the SSS
-                experiement_results = output
-                error_results = error
+                experiement_results = str(output)
+                error_results = str(error)
 
                 results_file = "results.txt"
                 error_file = "errResults.txt"
 
-                with open(os.path.join(DIR_PATH, results_file), "wb") as f:
+                with open(os.path.join(DIR_PATH, results_file), "a") as f:
+                    f.write("Experiment " + clean_command + " (Kernel " + current_kernel + "):\n")
                     f.write(experiement_results)
+                    f.write('\n\n')
 
-                # r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': results_file})
-                # r_file.Upload()
-
-                with open(os.path.join(DIR_PATH, error_file), "wb") as f:
+                with open(os.path.join(DIR_PATH, error_file), "a") as f:
+                    f.write("Experiment " + clean_command + " (Kernel " + current_kernel + "):\n")
                     f.write(error_results)
-
-                # r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': error_file})
-                # r_file.Upload()
+                    f.write('\n\n')
 
 
         print("Experiment complete!")
@@ -116,6 +114,17 @@ class ExperimentManager:
             self.setup_environment(next_kernel)
         else:
             print("All experiments complete!")
+
+            # Upload the final results/errors to Google Drive
+
+            # r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': results_file})
+            # r_file.Upload()
+            
+            # r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': error_file})
+            # r_file.Upload()
+
+            # @TODO: Delete the files after successful upload.
+
             exit()
             
     def start(self):
