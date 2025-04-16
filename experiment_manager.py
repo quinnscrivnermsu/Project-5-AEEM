@@ -91,21 +91,31 @@ class ExperimentManager:
                 # Retrieve output and errors from the command that was ran. (This will wait for the experiment to finish before returning the output and error)
                 output, error = experiment.communicate()
 
-                experiement_results = str(output)
-                error_results = str(error)
+                experiment_results = output.decode('utf-8', errors='ignore')
+                error_results = error.decode('utf-8', errors='ignore')
 
                 results_file = "results.txt"
                 error_file = "errResults.txt"
 
                 with open(os.path.join(DIR_PATH, results_file), "a") as f:
                     f.write("Experiment " + clean_command + " (Kernel " + current_kernel + "):\n")
-                    f.write(experiement_results)
+                    f.write(experiment_results)
                     f.write('\n\n')
 
                 with open(os.path.join(DIR_PATH, error_file), "a") as f:
                     f.write("Experiment " + clean_command + " (Kernel " + current_kernel + "):\n")
                     f.write(error_results)
                     f.write('\n\n')
+
+                # Upload the final results/errors to Google Drive
+
+                #r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': results_file})
+                #r_file.Upload()
+                
+                #r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': error_file})
+                #r_file.Upload()
+
+                # @TODO: Delete the files after successful upload.
 
 
         print("Experiment complete!")
@@ -114,16 +124,6 @@ class ExperimentManager:
             self.setup_environment(next_kernel)
         else:
             print("All experiments complete!")
-
-            # Upload the final results/errors to Google Drive
-
-            # r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': results_file})
-            # r_file.Upload()
-            
-            # r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': error_file})
-            # r_file.Upload()
-
-            # @TODO: Delete the files after successful upload.
 
             exit()
             
