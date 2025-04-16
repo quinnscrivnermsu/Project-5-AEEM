@@ -14,6 +14,8 @@ Lastly, the user will be prompted to enter the shell command to use for each exp
 
 The program will then start a timer and then reboot and begin the experiments.
 
+# How to Setup PyDrive & Obtain client_secrets.json
+https://pythonhosted.org/PyDrive/quickstart.html
 
 # How to Run Experiments Without Switching Kernels
 1. Create a text file in the project directory
