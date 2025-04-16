@@ -33,6 +33,14 @@ class ExperimentManager:
                     for command in commands:
                         file.write(f"{command}\n")
 
+    def log_event(self, event):
+        event_log = f"{time.ctime()}: {event}"
+
+        with open(os.path.join(DIR_PATH, 'log.txt'), "a") as log_file:
+            log_file.write(event_log + "\n")
+        
+        print(event_log)
+
     def get_next_kernel(self, current_kernel):
         try:
             benchmark_files = sorted([file for file in os.listdir(DIR_PATH) if file.endswith('.txt') ])
@@ -46,7 +54,7 @@ class ExperimentManager:
             return None # Doesn't exist or not found in the file list
 
     def setup_environment(self, kernel):
-        print(f"Setting up environment...")
+        self.log_event(f"Setting up environment...")
 
         # Write to the systems crontab
         job_command = f"python {DIR_PATH}/run.py --kerneltorun { kernel }"
@@ -55,14 +63,14 @@ class ExperimentManager:
         CRON.write()
 
         # Switch the kernel and reboot.
-        print("System will reboot in 10 seconds and start the experiment!")
+        self.log_event("System will reboot in 10 seconds and start the experiment!")
         Popen(['grubby', '--set-default', '/boot/' + kernel], stdout=DEVNULL, stderr=DEVNULL).wait()
         time.sleep(10)
         Popen(['shutdown', '-r', 'now'])
 
 
     def run_benchmarks(self, current_kernel):
-        print(f"Starting Experiment for Kernel {current_kernel}...\n")
+        self.log_event(f"Starting Experiments for Kernel {current_kernel}...")
 
         # Get current kernel cron entry and remove it
         CRON.remove_all(comment=f'AEEM-Kernel({current_kernel})')
@@ -73,7 +81,7 @@ class ExperimentManager:
         
         benchmark_file = current_kernel + '.txt'
         if not os.path.exists(os.path.join(DIR_PATH, benchmark_file)):
-            print("No benchmarks found.")
+            self.log_event("No benchmarks found for this kernel. Exiting...")
 
             if next_kernel is None:
                 exit() # Exit the program as we don't have any more benchmarks to run.
@@ -98,12 +106,12 @@ class ExperimentManager:
                 error_file = "errResults.txt"
 
                 with open(os.path.join(DIR_PATH, results_file), "a") as f:
-                    f.write("Experiment " + clean_command + " (Kernel " + current_kernel + "):\n")
+                    f.write(f"Experiment {clean_command} (Kernel {current_kernel}):\n")
                     f.write(experiment_results)
                     f.write('\n\n')
 
                 with open(os.path.join(DIR_PATH, error_file), "a") as f:
-                    f.write("Experiment " + clean_command + " (Kernel " + current_kernel + "):\n")
+                    f.write(f"Experiment {clean_command} (Kernel {current_kernel}):\n")
                     f.write(error_results)
                     f.write('\n\n')
 
@@ -115,16 +123,16 @@ class ExperimentManager:
                 #r_file = drive.CreateFile({'parents': [{'id': folder_id}], 'title': error_file})
                 #r_file.Upload()
 
-                # @TODO: Delete the files after successful upload.
+                # @TODO:  Upload log file to Google Drive.
 
-
-        print("Experiment complete!")
+                self.log_event(f"Command {clean_command} finished. Results saved.")
 
         if next_kernel is not None:
             self.setup_environment(next_kernel)
         else:
-            print("All experiments complete!")
+            self.log_event("All experiments complete!")
 
+            # @TODO: After all experiments have completed. Delete log, results and error files.
             exit()
             
     def start(self):
