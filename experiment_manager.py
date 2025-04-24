@@ -92,7 +92,7 @@ class ExperimentManager:
                 self.setup_environment(next_kernel) # Switch to the next kernel
                 return
 
-        input_sizes = [10, 12, 14, 16, 18]
+        input_sizes = []
         all_results = []
 
         # Open our text file and run all of our benchmarks
@@ -100,13 +100,17 @@ class ExperimentManager:
             for command in file:
                 clean_command = command.strip()
 
-                for size in input_sizes:
-                    full_command = f"{clean_command} -g {size} -n 1"
+                    full_command = clean_command
                     experiment = Popen(full_command, stdout=PIPE, stderr=PIPE, shell=True)
                     output, error = experiment.communicate()
 
                     experiment_results = output.decode('utf-8', errors='ignore')
                     error_results = error.decode('utf-8', errors='ignore')
+
+                    # Extract -g input size from the command
+                    import re
+                    size_match = re.search(r"-g\s+(\d+)", full_command)
+                    input_size = int(size_match.group(1)) if size_match else -1
 
                     results_file = "results.txt"
                     error_file = "errResults.txt"
@@ -121,11 +125,13 @@ class ExperimentManager:
                         f.write(error_results)
                         f.write('\n\n')
 
-                    exec_time = random.uniform(1, 50)
+                    time_match = re.search(r"Average Time:\s*([0-9.]+)", experiment_results)
+                    exec_time = float(time_match.group(1)) if time_match else -1
+                
                     all_results.append({
                             "Kernel": current_kernel,
                             "Benchmark": clean_command,
-                            "Input Size": size,
+                            "Input Size": input_size,
                             "Execution Time": exec_time,
                             "Test": clean_command
                         })
