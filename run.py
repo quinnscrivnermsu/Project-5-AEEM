@@ -1,6 +1,7 @@
 # CSC 450 Project 5: Automated Experiment Execution Manager
 
 import os, argparse
+from pathlib import Path
 from experiment_manager import ExperimentManager
 
 parser = argparse.ArgumentParser()
