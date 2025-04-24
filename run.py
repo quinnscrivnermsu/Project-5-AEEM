@@ -2,10 +2,48 @@ import os
 import argparse
 import time
 import pandas as pd
+import smtplib
+from email.message import EmailMessage
+import getpass
 from experiment_manager import ExperimentManager, drive, folder_id
 from visualization import generate_all_visualizations
 
+# Email sending function.
+def send_email(subject, body, to_email, attachment_path=None, sender_email=None, sender_password=None):
+    msg = EmailMessage()
+    msg['Subject'] = subject
+    msg['From'] = sender_email
+    msg['To'] = to_email
+    msg.set_content(body)
+    
+    # Attach a file if provided.
+    if attachment_path and os.path.exists(attachment_path):
+        with open(attachment_path, 'rb') as f:
+            file_data = f.read()
+        msg.add_attachment(
+            file_data,
+            maintype='application',
+            subtype='octet-stream',
+            filename=os.path.basename(attachment_path)
+        )
+    
+    try:
+        # Using Office365 SMTP
+        with smtplib.SMTP("smtp.office365.com", 587) as server:
+            server.starttls()
+            server.login(sender_email, sender_password)
+            server.send_message(msg)
+        print("Email sent successfully.")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
+# Get the directory where run.py is located.
 DIR_PATH, _ = os.path.split(os.path.abspath(__file__))
+
+# Prompt for email credentials at the beginning
+print("Please provide your email credentials for notifications:")
+sender_email = input("Enter your university email address (e.g., your_email@missouristate.edu): ").strip()
+sender_password = getpass.getpass("Enter your email password (or app password): ")
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-k', '--kerneltorun', action='append', nargs='+')
@@ -16,6 +54,7 @@ print("Welcome to the Automated Experiment Execution Manager:\n")
 manager = ExperimentManager()
 
 if args.kerneltorun is None:
+    # Interactive mode: ask user for kernel details.
     while True:
         try:
             kernel_num = int(input("Input How Many Kernels Will Be Used: "))
@@ -83,3 +122,12 @@ for vis in visualizations:
             print(f"Error uploading {vis}: {e}")
     else:
         print(f"Visualization file {vis_path} not found!")
+
+# Send email notification upon successful completion.
+recipient_email = "recipient@missouristate.edu"  # Change to the actual recipient address.
+subject = "Experiments Completed Successfully"
+body = ("The experiments have finished executing, and the CSV results along with visualizations have been "
+        "generated and uploaded to Google Drive.")
+attachment = csv_file  # Optionally attach the CSV file.
+
+send_email(subject, body, recipient_email, attachment_path=attachment, sender_email=sender_email, sender_password=sender_password)
