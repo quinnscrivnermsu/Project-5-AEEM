@@ -28,8 +28,8 @@ def send_email(subject, body, to_email, attachment_path=None, sender_email=None,
         )
     
     try:
-        # Using Office365 SMTP
-        with smtplib.SMTP("smtp.office365.com", 587) as server:
+        # Using Google SMTP
+        with smtplib.SMTP("smtp.gmail.com", 465) as server:
             server.starttls()
             server.login(sender_email, sender_password)
             server.send_message(msg)
@@ -43,6 +43,8 @@ DIR_PATH, _ = os.path.split(os.path.abspath(__file__))
 # Prompt for email credentials at the beginning
 print("Please provide your email credentials for notifications:")
 sender_email = input("Enter your university email address (e.g., your_email@missouristate.edu): ").strip()
+
+#2FA accounts will need to generate app password. Generate from Google Account > Security > App Passwords
 sender_password = getpass.getpass("Enter your email password (or app password): ")
 
 parser = argparse.ArgumentParser()
