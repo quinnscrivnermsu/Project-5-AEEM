@@ -42,7 +42,7 @@ DIR_PATH, _ = os.path.split(os.path.abspath(__file__))
 
 # Prompt for email credentials at the beginning
 print("Please provide your email credentials for notifications:")
-sender_email = input("Enter your university email address (e.g., your_email@missouristate.edu): ").strip()
+sender_email = input("Enter your email address (e.g., your_email@gmail.com): ").strip()
 
 #2FA accounts will need to generate app password. Generate from Google Account > Security > App Passwords
 sender_password = getpass.getpass("Enter your email password (or app password): ")
