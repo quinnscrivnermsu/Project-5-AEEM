@@ -1,1 +1,0 @@
-C:\Users\qdscr\Desktop\Coding\Project-5-AEEM\gapbs\bfs -g 10 -n 1
