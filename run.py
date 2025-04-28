@@ -7,10 +7,21 @@ from email.message import EmailMessage
 import getpass
 from experiment_manager import ExperimentManager, drive, folder_id
 from visualization import generate_all_visualizations
+from dotenv import load_dotenv
 
+# Load environment variables from .env file
+load_dotenv()
+
+sender_email = "aeemproject@gmail.com"
+#This is the app password for the google 2fa, will need to be changed if the sender email gets changed. 
+sender_password = os.getenv("SENDER_PASSWORD")
+to_email = "aeemproject@gmail.com"
 # Email sending function.
-def send_email(subject, body, to_email, attachment_path=None, sender_email=None, sender_password=None):
+def send_email(subject, body, to_email, attachment_path=None, sender_email=sender_email, sender_password=sender_password):
     msg = EmailMessage()
+    # Uncomment and add in app password to this line.
+    # app_password = "abcdefghijklmnop"
+    
     msg['Subject'] = subject
     msg['From'] = sender_email
     msg['To'] = to_email
@@ -29,8 +40,7 @@ def send_email(subject, body, to_email, attachment_path=None, sender_email=None,
     
     try:
         # Using Google SMTP
-        with smtplib.SMTP("smtp.gmail.com", 465) as server:
-            server.starttls()
+        with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
             server.login(sender_email, sender_password)
             server.send_message(msg)
         print("Email sent successfully.")
@@ -40,13 +50,7 @@ def send_email(subject, body, to_email, attachment_path=None, sender_email=None,
 # Get the directory where run.py is located.
 DIR_PATH, _ = os.path.split(os.path.abspath(__file__))
 
-# Prompt for email credentials at the beginning
-print("Please provide your email credentials for notifications:")
-sender_email = input("Enter your email address (e.g., your_email@gmail.com): ").strip()
-
 #2FA accounts will need to generate app password. Generate from Google Account > Security > App Passwords
-sender_password = getpass.getpass("Enter your email password (or app password): ")
-
 parser = argparse.ArgumentParser()
 parser.add_argument('-k', '--kerneltorun', action='append', nargs='+')
 args = parser.parse_args()
