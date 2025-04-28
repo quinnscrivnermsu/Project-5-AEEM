@@ -106,9 +106,9 @@ class ExperimentManager:
             with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
                 server.login(sender_email, sender_password)
                 server.send_message(msg)
-            print("Email sent successfully.")
+            self.log_event("Experiment email sent successfully.")
         except Exception as e:
-            print(f"Failed to send email: {e}")
+            self.log_event(f"Failed to send email: {e}")
 
     def setup_environment(self, kernel):
         self.log_event(f"Setting up environment...")
@@ -190,6 +190,13 @@ class ExperimentManager:
                         "Test": clean_command
                     })
 
+                # Notify the user of the completion of the experiment
+                self.send_email(
+                    subject=f"Experiment {full_command} completed",
+                    body=f"Command {full_command} finished. Results have been saved.",
+                    to_email=to_email
+                )
+
                 self.log_event(f"Command {full_command} finished. Results saved.")
 
         # Save CSV
@@ -223,13 +230,17 @@ class ExperimentManager:
         else:
             self.log_event("All experiments complete!")
             self.send_email(
-                subject="Experiment Complete",
-                body="All experiments have been completed successfully.",
+                subject="All experiment data has been collected.",
+                body="All of the running experiments have been completed successfully attached with the results.",
                 to_email=to_email,
                 attachment_path=csv_path
             )
 
-            # @TODO: After all experiments have completed. Delete log, results and error files.
+            os.remove(os.path.join(DIR_PATH, results_file))
+            os.remove(os.path.join(DIR_PATH, error_file))
+            os.remove(os.path.join(DIR_PATH, csv_path))
+            os.remove(os.path.join(DIR_PATH, vis_path))
+
             exit()
             
     def start(self):
