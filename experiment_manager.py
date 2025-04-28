@@ -218,6 +218,7 @@ class ExperimentManager:
         output_folder = os.path.join(DIR_PATH, "experiment_results")
         os.makedirs(output_folder, exist_ok=True)
         generate_all_visualizations(df_results, output_folder)
+        self.log_event("All visualizations generated successfully.")
 
         for vis_file in ["all_experiments.png", "heatmap_all.png"]:
             vis_path = os.path.join(output_folder, vis_file)

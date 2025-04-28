@@ -18,7 +18,8 @@ def generate_line_plot(df_all, output_folder):
     file_all_exp = os.path.join(output_folder, "all_experiments.png")
     plt.savefig(file_all_exp)
     plt.close()
-    print(f"Line plot saved to: {file_all_exp}")
+
+    #print(f"Line plot saved to: {file_all_exp}")
 
 # Generates a heatmap comparing execution times across experiments.
 def generate_heatmap(df_all, output_folder):
@@ -31,7 +32,8 @@ def generate_heatmap(df_all, output_folder):
     file_heatmap = os.path.join(output_folder, "heatmap_all.png")
     plt.savefig(file_heatmap)
     plt.close()
-    print(f"Heatmap saved to: {file_heatmap}")
+
+    #print(f"Heatmap saved to: {file_heatmap}")
 
 # Generates a bar chart showing average execution time per benchmark.
 def generate_bar_chart(df_all, output_folder):
@@ -44,11 +46,11 @@ def generate_bar_chart(df_all, output_folder):
     file_bar_chart = os.path.join(output_folder, "bar_chart.png")
     plt.savefig(file_bar_chart)
     plt.close()
-    print(f"Bar chart saved to: {file_bar_chart}")
+
+    #print(f"Bar chart saved to: {file_bar_chart}")
 
 # Generates all visualizations: line plot, heatmap, and bar chart.
 def generate_all_visualizations(df_all, output_folder):
     generate_line_plot(df_all, output_folder)
     generate_heatmap(df_all, output_folder)
     generate_bar_chart(df_all, output_folder)
-    print("All visualizations generated successfully.")
