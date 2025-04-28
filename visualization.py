@@ -1,6 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np 
 
 # Generates a line plot comparing execution time across all experiments.
 def generate_line_plot(df_all, output_folder):
@@ -22,7 +23,7 @@ def generate_line_plot(df_all, output_folder):
 # Generates a heatmap comparing execution times across experiments.
 def generate_heatmap(df_all, output_folder):
     plt.figure(figsize=(8, 5))
-    heatmap_data = df_all.pivot(index="Input Size", columns="Test", values="Execution Time")
+    heatmap_data = df_all.pivot_table(index="Input Size", columns="Test", values="Execution Time", aggfunc="mean")
     sns.heatmap(heatmap_data, annot=True, cmap='coolwarm', fmt=".2f")
     plt.title("Execution Time Heatmap Across All Experiments")
     plt.xlabel("Experiments")

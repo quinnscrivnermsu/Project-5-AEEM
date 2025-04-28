@@ -2,3 +2,9 @@ __pycache__/
 results.txt
 errResults.txt
 client_secrets.json
+.env
+README.md
+experiment_results/all_experiments.png
+experiment_results/bar_chart.png
+experiment_results/heatmap_all.png
+all_experiment_results.csv

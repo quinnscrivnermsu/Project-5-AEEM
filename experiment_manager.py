@@ -4,19 +4,32 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 from crontab import CronTab
 import pandas as pd
+import smtplib
+from email.message import EmailMessage
 from visualization import generate_all_visualizations
+
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 DIR_PATH, FILE_PATH = os.path.split(os.path.abspath(__file__))
 GAPBS_PATH = DIR_PATH + '/gapbs/'
 CRON = CronTab(user=True)
 
-# Authenticate and Create PyDrive Client
+# Authenticate with Google Drive.
 gauth = GoogleAuth()
 gauth.LocalWebserverAuth()
 drive = GoogleDrive(gauth)
 
 #Specify the Folder ID that gets the uploaded files. 
 folder_id = '1ejmiLZweyhIZtv_Fi_3KzsMmMYNjPjEa'
+
+# 2FA accounts will need to generate app password. Generate from Google Account > Security > App Passwords
+sender_email = "aeemproject@gmail.com"
+# This is the app password for the google 2fa, will need to be changed if the sender email gets changed. 
+sender_password = os.getenv("SENDER_PASSWORD")
+to_email = "aeemproject@gmail.com"
 
 class ExperimentManager:
     def load_experiment_data(self, exp_data):
@@ -54,6 +67,35 @@ class ExperimentManager:
             return benchmark_files[current_file + 1].replace('.txt', '')
         except ValueError:
             return None # Doesn't exist or not found in the file list
+
+    # Email sending function.
+    def send_email(self, subject, body, to_email, attachment_path=None, sender_email=sender_email, sender_password=sender_password):
+        msg = EmailMessage()
+        
+        msg['Subject'] = subject
+        msg['From'] = sender_email
+        msg['To'] = to_email
+        msg.set_content(body)
+        
+        # Attach a file if provided.
+        if attachment_path and os.path.exists(attachment_path):
+            with open(attachment_path, 'rb') as f:
+                file_data = f.read()
+            msg.add_attachment(
+                file_data,
+                maintype='application',
+                subtype='octet-stream',
+                filename=os.path.basename(attachment_path)
+            )
+        
+        try:
+            # Using Google SMTP
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                server.login(sender_email, sender_password)
+                server.send_message(msg)
+            print("Email sent successfully.")
+        except Exception as e:
+            print(f"Failed to send email: {e}")
 
     def setup_environment(self, kernel):
         self.log_event(f"Setting up environment...")
@@ -94,6 +136,7 @@ class ExperimentManager:
         all_results = []
 
         # Open our text file and run all of our benchmarks
+        # @TODO: Experiments need to send notifications on each completion not when they are all completed. The machine should not ever be accessed during running.
         with open(os.path.join(DIR_PATH, benchmark_file)) as file:
             for command in file:
                 clean_command = command.strip()
@@ -166,6 +209,12 @@ class ExperimentManager:
             self.setup_environment(next_kernel)
         else:
             self.log_event("All experiments complete!")
+            self.send_email(
+                subject="Experiment Complete",
+                body="All experiments have been completed successfully.",
+                to_email=to_email,
+                attachment_path=csv_path
+            )
 
             # @TODO: After all experiments have completed. Delete log, results and error files.
             exit()

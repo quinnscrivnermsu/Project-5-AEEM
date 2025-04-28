@@ -1,8 +1,13 @@
 # CSC 450 Project 5: Automated Experiment Execution Manager
 
 import os, argparse
-from pathlib import Path
 from experiment_manager import ExperimentManager
+import os
+import argparse
+from experiment_manager import ExperimentManager
+
+# Get the directory where run.py is located.
+DIR_PATH, _ = os.path.split(os.path.abspath(__file__))
 
 parser = argparse.ArgumentParser()
 parser.add_argument('-k', '--kerneltorun', action='append', nargs='+')

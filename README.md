@@ -26,4 +26,7 @@ https://pythonhosted.org/PyDrive/quickstart.html
 - pydrive
 - python-crontab
 - pandas
+- matplotlib
+- seaborn
+- dotenv
 
