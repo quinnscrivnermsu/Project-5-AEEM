@@ -82,7 +82,7 @@ class ExperimentManager:
             return None # Doesn't exist or not found in the file list
 
     # Email sending function.
-    def send_email(self, subject, body, to_email, attachment_path=None, sender_email=sender_email, sender_password=sender_password):
+    def send_email(self, subject, body, to_email, attachment_paths=None, sender_email=sender_email, sender_password=sender_password):
         msg = EmailMessage()
         
         msg['Subject'] = subject
@@ -90,16 +90,18 @@ class ExperimentManager:
         msg['To'] = to_email
         msg.set_content(body)
         
-        # Attach a file if provided.
-        if attachment_path and os.path.exists(attachment_path):
-            with open(attachment_path, 'rb') as f:
-                file_data = f.read()
-            msg.add_attachment(
-                file_data,
-                maintype='application',
-                subtype='octet-stream',
-                filename=os.path.basename(attachment_path)
-            )
+        # Attach each file to the email
+        if attachment_paths:
+            for attachment_path in attachment_paths:
+                if os.path.exists(attachment_path):
+                    with open(attachment_path, 'rb') as f:
+                        file_data = f.read()
+                    msg.add_attachment(
+                        file_data,
+                        maintype='application',
+                        subtype='octet-stream',
+                        filename=os.path.basename(attachment_path)
+                    )
         
         try:
             # Using Google SMTP
@@ -230,10 +232,10 @@ class ExperimentManager:
         else:
             self.log_event("All experiments complete!")
             self.send_email(
-                subject="All experiment data has been collected.",
-                body="All of the running experiments have been completed successfully attached with the results.",
+                subject="All experiment data has been collected",
+                body="All of the running experiments have completed and the results have been attached to this email.",
                 to_email=to_email,
-                attachment_path=csv_path
+                attachment_paths=[results_file, csv_path, vis_path]
             )
 
             os.remove(os.path.join(DIR_PATH, results_file))
