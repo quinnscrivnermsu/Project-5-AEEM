@@ -4,7 +4,6 @@ from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
 from crontab import CronTab
 import pandas as pd
-import random
 from visualization import generate_all_visualizations
 
 DIR_PATH, FILE_PATH = os.path.split(os.path.abspath(__file__))
@@ -92,7 +91,6 @@ class ExperimentManager:
                 self.setup_environment(next_kernel) # Switch to the next kernel
                 return
 
-        input_sizes = []
         all_results = []
 
         # Open our text file and run all of our benchmarks
@@ -100,43 +98,43 @@ class ExperimentManager:
             for command in file:
                 clean_command = command.strip()
 
-                    full_command = clean_command
-                    experiment = Popen(full_command, stdout=PIPE, stderr=PIPE, shell=True)
-                    output, error = experiment.communicate()
+                full_command = clean_command
+                experiment = Popen(full_command, stdout=PIPE, stderr=PIPE, shell=True)
+                output, error = experiment.communicate()
 
-                    experiment_results = output.decode('utf-8', errors='ignore')
-                    error_results = error.decode('utf-8', errors='ignore')
+                experiment_results = output.decode('utf-8', errors='ignore')
+                error_results = error.decode('utf-8', errors='ignore')
 
-                    # Extract -g input size from the command
-                    import re
-                    size_match = re.search(r"-g\s+(\d+)", full_command)
-                    input_size = int(size_match.group(1)) if size_match else -1
+                # Extract -g input size from the command
+                import re
+                size_match = re.search(r"-g\s+(\d+)", full_command)
+                input_size = int(size_match.group(1)) if size_match else -1
 
-                    results_file = "results.txt"
-                    error_file = "errResults.txt"
+                results_file = "results.txt"
+                error_file = "errResults.txt"
 
-                    with open(os.path.join(DIR_PATH, results_file), "a") as f:
-                        f.write(f"Experiment {clean_command} (Kernel {current_kernel}):\n")
-                        f.write(experiment_results)
-                        f.write('\n\n')
-    
-                    with open(os.path.join(DIR_PATH, error_file), "a") as f:
-                        f.write(f"Experiment {clean_command} (Kernel {current_kernel}):\n")
-                        f.write(error_results)
-                        f.write('\n\n')
+                with open(os.path.join(DIR_PATH, results_file), "a") as f:
+                    f.write(f"Experiment {clean_command} (Kernel {current_kernel}):\n")
+                    f.write(experiment_results)
+                    f.write('\n\n')
 
-                    time_match = re.search(r"Average Time:\s*([0-9.]+)", experiment_results)
-                    exec_time = float(time_match.group(1)) if time_match else -1
-                
-                    all_results.append({
-                            "Kernel": current_kernel,
-                            "Benchmark": clean_command,
-                            "Input Size": input_size,
-                            "Execution Time": exec_time,
-                            "Test": clean_command
-                        })
-    
-                    self.log_event(f"Command {full_command} finished. Results saved.")
+                with open(os.path.join(DIR_PATH, error_file), "a") as f:
+                    f.write(f"Experiment {clean_command} (Kernel {current_kernel}):\n")
+                    f.write(error_results)
+                    f.write('\n\n')
+
+                time_match = re.search(r"Average Time:\s*([0-9.]+)", experiment_results)
+                exec_time = float(time_match.group(1)) if time_match else -1
+            
+                all_results.append({
+                        "Kernel": current_kernel,
+                        "Benchmark": clean_command,
+                        "Input Size": input_size,
+                        "Execution Time": exec_time,
+                        "Test": clean_command
+                    })
+
+                self.log_event(f"Command {full_command} finished. Results saved.")
 
         # Save CSV
         df_results = pd.DataFrame(all_results)

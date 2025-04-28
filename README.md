@@ -25,4 +25,5 @@ https://pythonhosted.org/PyDrive/quickstart.html
 # Dependencies
 - pydrive
 - python-crontab
+- pandas
 
