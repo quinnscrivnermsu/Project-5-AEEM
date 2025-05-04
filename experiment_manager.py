@@ -1,4 +1,4 @@
-import os, time
+import os, time, re
 from subprocess import PIPE, DEVNULL, Popen
 from pydrive.auth import GoogleAuth
 from pydrive.drive import GoogleDrive
@@ -61,8 +61,8 @@ class ExperimentManager:
                     for command in commands:
                         file.write(f"{command}\n")
 
-    def log_event(self, event):
-        event_log = f"{time.ctime()}: {event}"
+    def log_event(self, event, level = "INFO"):
+        event_log = f"{time.ctime()}: [{level}] {event}"
 
         with open(os.path.join(DIR_PATH, 'log.txt'), "a") as log_file:
             log_file.write(event_log + "\n")
@@ -110,7 +110,7 @@ class ExperimentManager:
                 server.send_message(msg)
             self.log_event("Experiment email sent successfully.")
         except Exception as e:
-            self.log_event(f"Failed to send email: {e}")
+            self.log_event(f"Failed to send email: {e}", "ERROR")
 
     def setup_environment(self, kernel):
         self.log_event(f"Setting up environment...")
@@ -140,7 +140,7 @@ class ExperimentManager:
         
         benchmark_file = current_kernel + '.txt'
         if not os.path.exists(os.path.join(DIR_PATH, benchmark_file)):
-            self.log_event("No benchmarks found for this kernel. Exiting...")
+            self.log_event("No benchmarks found for this kernel. Exiting...", "WARN")
 
             if next_kernel is None:
                 exit() # Exit the program as we don't have any more benchmarks to run.
@@ -151,7 +151,6 @@ class ExperimentManager:
         all_results = []
 
         # Open our text file and run all of our benchmarks
-        # @TODO: Experiments need to send notifications on each completion not when they are all completed. The machine should not ever be accessed during running.
         with open(os.path.join(DIR_PATH, benchmark_file)) as file:
             for command in file:
                 clean_command = command.strip()
@@ -164,7 +163,6 @@ class ExperimentManager:
                 error_results = error.decode('utf-8', errors='ignore')
 
                 # Extract -g input size from the command
-                import re
                 size_match = re.search(r"-g\s+(\d+)", full_command)
                 input_size = int(size_match.group(1)) if size_match else -1
 
@@ -181,6 +179,16 @@ class ExperimentManager:
                     f.write(error_results)
                     f.write('\n\n')
 
+                if error_results:
+                    self.log_event(f"Error in command {clean_command}", "ERROR")
+                    self.send_email(
+                        subject=f"Experiment {full_command} failed",
+                        body=f"Command {full_command} failed. Details of the error can be found in the attached file.",
+                        to_email=to_email,
+                        attachment_paths=[error_file],
+                    )
+                    continue
+
                 time_match = re.search(r"Average Time:\s*([0-9.]+)", experiment_results)
                 exec_time = float(time_match.group(1)) if time_match else -1
             
@@ -195,11 +203,12 @@ class ExperimentManager:
                 # Notify the user of the completion of the experiment
                 self.send_email(
                     subject=f"Experiment {full_command} completed",
-                    body=f"Command {full_command} finished. Results have been saved.",
-                    to_email=to_email
+                    body=f"Command {full_command} completed. Results have been saved.",
+                    to_email=to_email,
+                    attachment_paths=[results_file, error_file],
                 )
 
-                self.log_event(f"Command {full_command} finished. Results saved.")
+                self.log_event(f"Command {full_command} completed. Results saved.")
 
         # Save CSV
         df_results = pd.DataFrame(all_results)
@@ -231,14 +240,15 @@ class ExperimentManager:
         if next_kernel is not None:
             self.setup_environment(next_kernel)
         else:
-            self.log_event("All experiments complete!")
+            self.log_event("All experiments have completed!")
             self.send_email(
-                subject="All experiment data has been collected",
+                subject="AEEM experiments data",
                 body="All of the running experiments have completed and the results have been attached to this email.",
                 to_email=to_email,
                 attachment_paths=[results_file, csv_path, vis_path]
             )
 
+            # Clean up experiment files 
             os.remove(os.path.join(DIR_PATH, results_file))
             os.remove(os.path.join(DIR_PATH, error_file))
             os.remove(os.path.join(DIR_PATH, csv_path))
