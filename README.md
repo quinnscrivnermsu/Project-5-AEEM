@@ -14,6 +14,12 @@ Lastly, the user will be prompted to enter the shell command to use for each exp
 
 The program will then start a timer and then reboot and begin the experiments.
 
+After each experiment:
+- The results will be saved
+- Visual graphs will be generated
+- Files will be uploaded to Google Drive
+- An email notification will be sent
+
 # How to Setup PyDrive & Obtain client_secrets.json
 https://pythonhosted.org/PyDrive/quickstart.html
 
@@ -22,6 +28,18 @@ https://pythonhosted.org/PyDrive/quickstart.html
 2. Run the python program with the following arguments `python run.py --kerneltorun <textFileName>.txt
 3. Observe the results in the log files
 
+# How to Enable Email Notifications
+This project uses **email notifications** to alert users when experiments complete.
+
+Because most email accounts have **two-factor authentication (2FA)**, you must set up an **App Password**.
+
+Steps:
+1. Go to your [Google Account Security Settings](https://myaccount.google.com/security)
+2. Under "Signing in to Google," select **App Passwords**
+3. Create a new App Password (you can name it "AEEM Script")
+4. Copy the 16-character generated password
+5. Create a `.env` file in the project directory containing: SENDER_PASSWORD=your_generated_app_password_here
+
 # Dependencies
 - pydrive
 - python-crontab
@@ -29,4 +47,12 @@ https://pythonhosted.org/PyDrive/quickstart.html
 - matplotlib
 - seaborn
 - dotenv
+
+# Features Summary
+- Fully automated experiment execution
+- Kernel switching (only on Linux systems)
+- Logging of results and errors
+- Visual graph generation
+- Automatic upload to Google Drive
+- Email notifications with attachments
 
